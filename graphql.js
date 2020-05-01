@@ -1,17 +1,11 @@
+'use strict';
+
 const expenditure_raw = require("./raw-data/expenditure.json");
 const income_raw = require("./raw-data/income.json");
 const locality_raw = require("./raw-data/locality.json");
 const pincode_raw = require("./raw-data/pincode.json");
 const typeDefs = require("./schema.js");
-const express = require("express");
-const app = express();
-const http = require("http");
-const bodyParser = require("body-parser");
-const { ApolloServer } = require("apollo-server-express");
-const cors = require("cors");
-
-app.use(bodyParser.json());
-app.use(cors());
+const { ApolloServer } = require('apollo-server-lambda');
 
 const resolvers = {
 	Query: {
@@ -68,17 +62,13 @@ const resolvers = {
 	}
 };
 
-const server = new ApolloServer({
-	typeDefs,
+const server = new ApolloServer({ 
+  typeDefs,
 	resolvers,
 	introspection: true,
-	playground: true
+  playground: {
+    endpoint: '/dev/graphql'
+  } 
 });
 
-server.applyMiddleware({ app });
-const httpServer = http.createServer(app);
-server.installSubscriptionHandlers(httpServer);
-
-httpServer.listen(process.env.PORT || 4000, () => {
-	console.log("GraphQL Server running on Port 4000");
-});
+exports.graphqlHandler = server.createHandler();
