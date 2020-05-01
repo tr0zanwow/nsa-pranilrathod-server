@@ -2,13 +2,9 @@ const { gql } = require('apollo-server-lambda');
 
 const typeDefs = gql`
     type Query { 
-      getCoordinates: Coordinates
+      getCoordinates: [coordinatesListType]
       searchData(pincode: Int,locality: String): combinedData
       }
-
-    type Coordinates {
-      features: [coordinatesListType]
-    }
 
     type coordinatesListType {
       attributes: attributesType,

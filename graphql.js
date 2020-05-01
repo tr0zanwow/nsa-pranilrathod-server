@@ -1,33 +1,37 @@
 'use strict';
 
-const expenditure_raw = require("./raw-data/expenditure.json");
-const income_raw = require("./raw-data/income.json");
-const locality_raw = require("./raw-data/locality.json");
-const pincode_raw = require("./raw-data/pincode.json");
-const typeDefs = require("./schema.js");
-const { ApolloServer } = require('apollo-server-lambda');
+var expenditure_raw = require("./raw-data/expenditure.json");
+var income_raw = require("./raw-data/income.json");
+var locality_raw = require("./raw-data/locality.json");
+var pincode_raw = require("./raw-data/pincode.json");
+var typeDefs = require("./schema.js");
+var { ApolloServer } = require('apollo-server-lambda');
 
-const resolvers = {
+var resolvers = {
 	Query: {
 		getCoordinates: () => {
-			pincode_raw.features.push(...locality_raw.features);
-			return pincode_raw;
+      var combinedData = []
+      combinedData.push(...pincode_raw.features)
+      combinedData.push(...locality_raw.features);
+			return combinedData;
 		},
 
 		searchData: (_, args) => {
       if(args.pincode != null && args.locality == null){
-
-        var foundPincodeData = pincode_raw.features.find(function(pincode, index) {
+        var foundPincodeData = null
+        foundPincodeData = pincode_raw.features.find(function(pincode, index) {
           if(pincode.attributes.pincode == args.pincode)
             return true;
         });
 
-        var foundExpenditure = expenditure_raw.find(function(expenditure, index) {
+        var foundExpenditure = null
+        foundExpenditure = expenditure_raw.find(function(expenditure, index) {
           if(expenditure.pincode == args.pincode)
             return true;
         });
 
-        const pin_exp_combinedData = {
+        var pin_exp_combinedData = null
+        pin_exp_combinedData = {
           ...foundPincodeData.attributes,
           ...foundExpenditure
         }
@@ -37,17 +41,20 @@ const resolvers = {
       }
       else if(args.locality != null && args.pincode == null){
         
-        var foundLocalityData = locality_raw.features.find(function(locality, index) {
+        var foundLocalityData =  null
+        foundLocalityData = locality_raw.features.find(function(locality, index) {
           if(locality.attributes.locality == args.locality)
             return true;
         });
 
-        var foundIncome = income_raw.find(function(income, index) {
+        var foundIncome = null
+        foundIncome = income_raw.find(function(income, index) {
           if(income.locality == args.locality)
             return true;
         });
 
-        const loc_inc_combinedData = {
+        var loc_inc_combinedData = null
+        loc_inc_combinedData = {
           ...foundLocalityData.attributes,
           ...foundIncome
         }
@@ -62,7 +69,7 @@ const resolvers = {
 	}
 };
 
-const server = new ApolloServer({ 
+var server = new ApolloServer({ 
   typeDefs,
 	resolvers,
 	introspection: true,
@@ -71,4 +78,9 @@ const server = new ApolloServer({
   } 
 });
 
-exports.graphqlHandler = server.createHandler();
+exports.graphqlHandler = server.createHandler({
+  cors: {
+    origin: '*',
+    credentials: true,
+  },
+});
